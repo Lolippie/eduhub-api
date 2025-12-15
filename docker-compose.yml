@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: eduhub
+      POSTGRES_PASSWORD: eduhub_password
+      POSTGRES_DB: eduhub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
