@@ -37,14 +37,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid registration pin or email' );
     }
     const hashedPassword = await bcrypt.hash(register.password, 10);
-    const newUser = await this.prismaService.user.create({
+    const newUser = await this.prismaService.user.update({
+      where: { email: register.email, registerPin: register.pin, status: 'PENDING' },
       data: {
-        email: register.email,
-        password: hashedPassword,
-        firstName: '',
-        lastName: '',
-      },
-    });
+        password: hashedPassword
+    }});
     const payload = { sub: newUser.id, email: newUser.email };
     return await this.jwtService.signAsync(payload);
   }
