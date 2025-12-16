@@ -52,15 +52,15 @@ export class CoursesService {
     }
 
     async enrollStudentToCourse(studentId: string, courseId: string) {
-        // const updatedCourse = await this.prismaService.course.update({
-        //     where: { id: courseId },
-        //     data: {
-        //         students: {
-        //             ...this.enrollStudentToCourse, studentId
-        //         },
-        //     },
-        // });
-        // return updatedCourse;
+         const updatedCourse = await this.prismaService.course.update({
+             where: { id: courseId },
+             data: {
+                 students: {
+                     ...this.enrollStudentToCourse, studentId
+                 },
+             },
+         });
+         return updatedCourse;
     }
 
     async unenrollStudentToCourse(studentId: string, courseId: string) {
