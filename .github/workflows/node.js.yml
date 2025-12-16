@@ -2,9 +2,9 @@ name: Build and test
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 env:
   DATABASE_URL: postgresql://eduhub:eduhub_password@localhost:5432/eduhub?schema=public&connection_limit=5
