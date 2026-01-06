@@ -1,6 +1,7 @@
 import { Optional } from "@nestjs/common";
 import {ApiProperty} from "@nestjs/swagger";
 import {IsOptional, IsString} from "class-validator";
+import { Ressource, User } from "generated/prisma";
 
 export class CreateCourseDto{
     @ApiProperty()
@@ -9,10 +10,15 @@ export class CreateCourseDto{
 
     @ApiProperty()
     @IsString()
-    contenu:string;
+    ressources:Ressource[];
 
     @ApiProperty()
     @IsString()
     @IsOptional()
-    idTeacher:string;
+    teacherId:string;
+
+    @ApiProperty()
+    @IsString()
+    @IsOptional()
+    students:User[];
 }

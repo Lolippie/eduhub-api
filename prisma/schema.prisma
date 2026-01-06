@@ -48,6 +48,7 @@ model Course {
   teacherId String?
   ressources Ressource[]
   students User[] @relation("CourseStudents")
+  quiz Quiz?
 }
 
 model Ressource{
@@ -55,4 +56,10 @@ model Ressource{
   fileUrl String 
   course Course @relation(fields:[courseId], references : [id])
   courseId String
+}
+
+model Quiz {
+  course Course @relation(fields:[courseId], references : [id])
+  courseId String @id
+  questions String[]
 }

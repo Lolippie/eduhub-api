@@ -3,32 +3,68 @@ import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create_courses.dto';
 import { UpdateCoursDto } from './dto/update_courses.dto';
 import { CourseRessourcesDto } from './dto/course_ressources.dto';
-import { Admin, Student} from 'src/auth/decorators/roles.decorator';
+import { Admin, Roles, Student} from 'src/auth/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
-import { User } from 'generated/prisma';
+import { Role, User } from 'generated/prisma';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('courses')
 export class CoursesController {
 
-      constructor(private coursesService: CoursesService) { }
+  constructor(private readonly coursesService: CoursesService, private readonly usersService: UsersService) { }
     
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Get('id')
-  async getCourses() {
+  @Get()
+  async getCourses(@Request() req) {
+    const user = req.user as User;
+    if(user.role === Role.STUDENT){
+      const studentCourses = await this.coursesService.getCoursesStudent(user.id);
+      if(!studentCourses){
+        throw new Error('No courses found for this student');
+      }
+      return studentCourses;
+    }
+    if(user.role === Role.TEACHER){
+      const teacherCourses = await this.coursesService.getCoursesTeacher(user.id);
+      if(!teacherCourses){
+        throw new Error('No courses found for this teacher');
+      }
+      return teacherCourses;
+    }
     return this.coursesService.getCourses();
-  }
+}
 
+  @Roles(Role.ADMIN, Role.TEACHER, Role.STUDENT)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Get('id')
-  async getCourse(@Param('id') id: string) {
-    return this.coursesService.getCourse(id);
+  async getCourse(@Param('id') idCourse: string, @Request() req) {
+    const user = req.user as User;
+    if(user.role === Role.STUDENT){
+      const course = await this.coursesService.getCourseStudent(user.id, idCourse);
+      if(!course){
+        throw new Error('The student is not enrolled in this course');
+      }
+      return course;
+    }
+    const course = await this.coursesService.getCourse(idCourse);
+    if (!course) {
+        throw new Error('Course not found');
+    }
+    if(!(user.role === Role.TEACHER && course.teacherId === user.id)){
+        throw new Error('The teacher does not managed this course');
+    }
+    return course;
   }
 
-  @Admin()
+  @Roles(Role.ADMIN, Role.TEACHER)
   @HttpCode(HttpStatus.CREATED)
   @Post('courses')
-  async postCourse(@Body() createCourseDto: CreateCourseDto, ) {
+  async createCourse(@Body() createCourseDto: CreateCourseDto, @Request() req) {
+    const user = req.user as User;
+    if(user.role === Role.TEACHER){
+      createCourseDto.teacherId = user.id;
+    }
     return this.coursesService.createCourse(createCourseDto);
   }
 
@@ -40,14 +76,22 @@ export class CoursesController {
   }
   
 
-  @Admin()
+  @Roles(Role.ADMIN, Role.TEACHER)
   @HttpCode(200)
   @Post('courses/:id')
-  async updateCourse(@Param('id') id:string, @Body() updateCourse: UpdateCoursDto) {
-    return this.coursesService.updateCourse( updateCourse, id);
+  async updateCourse(@Param('id') id:string, @Body() updateCourse: UpdateCoursDto, @Request() req) {
+      const course = await this.coursesService.getCourse(id);
+        if (!course) {
+            throw new Error('Course not found');
+        }
+        const user = req.user as User;
+
+        if(course.teacherId == user.id || user.role == Role.ADMIN){
+          return this.coursesService.updateCourse( updateCourse, id);
+        }
   }
   
-    @Admin()
+    @Roles(Role.ADMIN, Role.TEACHER)
     @HttpCode(200)
     @Post('courses/:id/ressources')
     @UseInterceptors(FileInterceptor('file'))
@@ -62,7 +106,7 @@ export class CoursesController {
         }
         const user = req.user as User;
 
-        if(course.teacherId == user.id){
+        if(course.teacherId == user.id || user.role == Role.ADMIN){
         fs.writeFile('uploads/' + file.originalname, file.buffer, (err) => {
             if (err) {
                 console.error('Error saving file:', err);
@@ -76,19 +120,43 @@ export class CoursesController {
       }
     }
 
-    @Student()
+    @Roles(Role.ADMIN, Role.TEACHER)
     @HttpCode(200)
     @Post('courses/:id/enroll')
-    async enrollStudentToCourse(@Param('id') courseId: string, @Request() req) {
+    async enrollStudentToCourse(@Param('id') courseId: string, @Body() usersId: string[], @Request() req) {
+      const course = await this.coursesService.getCourse(courseId);
+        if (!course) {
+            throw new Error('Course not found');
+        }
         const user = req.user as User;
-        return this.coursesService.enrollStudentToCourse(user.id, courseId);
+
+        if(course.teacherId == user.id || user.role == Role.ADMIN){
+          const students = await this.usersService.getUsersByIds(usersId);
+          if (!students || students.some((s) => !s)) {
+            throw new Error('One or more users not found');
+          }
+          return this.coursesService.enrollStudentToCourse(usersId, courseId);
+        }
+        else {
+        throw new Error('You are not the teacher of this course');
+      }     
     }
 
-    @Student()
+    @Roles(Role.ADMIN, Role.TEACHER)
     @HttpCode(200)
     @Post('courses/:id/unenroll')
-    async unenrollStudentToCourse(@Param('id') courseId: string, @Request() req) {
+    async unenrollStudentToCourse(@Param('id') courseId: string, @Body() studentsIdsUnenroll: string[], @Request() req) {
+      const course = await this.coursesService.getCourse(courseId);
+        if (!course) {
+            throw new Error('Course not found');
+        }
         const user = req.user as User;
-        return this.coursesService.unenrollStudentToCourse(user.id, courseId);
+
+        if(course.teacherId == user.id || user.role == Role.ADMIN){
+          return this.coursesService.unenrollStudentToCourse(studentsIdsUnenroll, courseId);
+        } 
+        else {
+        throw new Error('You are not the teacher of this course');
+      }     
     }
 }

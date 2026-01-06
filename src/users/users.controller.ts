@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Admin } from 'src/auth/decorators/roles.decorator';
-import { PrismaClient } from 'generated/prisma';
+import { PrismaClient, Role } from 'generated/prisma';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -17,6 +17,11 @@ export class UsersController {
     return this.usersService.getUsers();
   }
 
+  @Get()
+  @ApiResponse({ status: 200, description: 'List of users' }) // correspond a la doc de swagger
+  async getUsersByIds(@Body() ids: string[]) {
+    return this.usersService.getUsersByIds(ids);
+  }
   // Permet de recuperer tous les users version recuperation d'une promesse
   // async getUsers(): Promise<any> {
   //   const prisma = new PrismaClient(); // prisma permet d'interagir avec la base de données, il convertit
@@ -39,6 +44,13 @@ export class UsersController {
   @Patch('/:id')
   async updateUser(@Body() updatedUserDto: UpdateUserDto, @Param('id') id: string) {
     return this.usersService.updateUser(updatedUserDto, id);
+  }
+
+  @Admin()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Patch('/:id')
+  async updateRoleUser(@Body() role: Role, @Param('id') id: string) {
+    return this.usersService.updateRoleUser(role, id);
   }
 
   @Admin()
