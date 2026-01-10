@@ -43,6 +43,14 @@ export class CoursesService {
         return courses;
     }
 
+    async getCourseWithStudents(id: string){
+        const course = await this.prismaService.course.findUnique({
+            where: { id },
+            include: { students: true },
+        });
+        return course;
+    }
+
     async getCourseStudent(idStudent: string, idCourse:string){
         const courses = await this.prismaService.course.findUnique(
             {
