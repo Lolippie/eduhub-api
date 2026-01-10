@@ -1,7 +1,7 @@
 import { Optional } from "@nestjs/common";
 import {ApiProperty} from "@nestjs/swagger";
 import {IsOptional, IsString} from "class-validator";
-import { Ressource, User } from "generated/prisma";
+import { Resource, User } from "generated/prisma";
 
 export class CreateCourseDto{
     @ApiProperty()
@@ -10,7 +10,7 @@ export class CreateCourseDto{
 
     @ApiProperty()
     @IsString()
-    ressources:Ressource[];
+    ressources:Resource[];
 
     @ApiProperty()
     @IsString()

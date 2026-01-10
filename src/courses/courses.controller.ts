@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Uploa
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create_courses.dto';
 import { UpdateCoursDto } from './dto/update_courses.dto';
-import { CourseRessourcesDto } from './dto/course_ressources.dto';
+import { CourseResourcesDto } from './dto/course_resources.dto';
 import { Admin, Roles, Student} from 'src/auth/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
@@ -93,12 +93,12 @@ export class CoursesController {
   
     @Roles(Role.ADMIN, Role.TEACHER)
     @HttpCode(200)
-    @Post('courses/:id/ressources')
+  @Post('/:id/resources')
     @UseInterceptors(FileInterceptor('file'))
-    async addRessourcesToCourse(
+  async addResourcesToCourse(
       @UploadedFile() file: Express.Multer.File, 
       @Param('id') id:string, 
-      @Body() courseRessources: CourseRessourcesDto, 
+    @Body() courseResources: CourseResourcesDto, 
       @Request() req) {
         const course = await this.coursesService.getCourse(id);
         if (!course) {
@@ -114,7 +114,7 @@ export class CoursesController {
                 console.log('File saved successfully');
             }
         });
-        return this.coursesService.addRessourcesToCourse(courseRessources, id);
+      return this.coursesService.addResourcesToCourse(courseResources, id);
       } else {
         throw new Error('You are not the teacher of this course');
       }

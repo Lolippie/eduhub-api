@@ -7,9 +7,10 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CoursesModule } from './courses/courses.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
+import { ResourcesModule } from './resources/resources.module';
 
 @Module({
-  imports: [DatabaseModule, ConfigModule.forRoot(), AuthModule, UsersModule, CoursesModule, QuizzesModule],
+  imports: [DatabaseModule, ConfigModule.forRoot(), AuthModule, UsersModule, CoursesModule, QuizzesModule, ResourcesModule],
   controllers: [AppController],
   providers: [AppService],
 })

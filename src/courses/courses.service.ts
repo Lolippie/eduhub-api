@@ -2,7 +2,7 @@ import { Injectable} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import {CreateCourseDto} from "./dto/create_courses.dto";
 import {UpdateCoursDto} from "./dto/update_courses.dto";
-import { CourseRessourcesDto } from './dto/course_ressources.dto';
+import { CourseResourcesDto } from './dto/course_resources.dto';
 import { User } from 'generated/prisma';
 
 @Injectable()
@@ -93,9 +93,9 @@ export class CoursesService {
         return course;
     }
     
-    async addRessourcesToCourse(courseRessources: CourseRessourcesDto, id:string){
+    async addResourcesToCourse(courseResources: CourseResourcesDto, id:string){
         const updatedCourse = await this.prismaService.course.update({
-            data: courseRessources,
+            data: courseResources,
             where: { id }
         });
         return updatedCourse;
