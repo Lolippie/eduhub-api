@@ -4,13 +4,13 @@ import { UsersService } from './users.service';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Admin } from 'src/auth/decorators/roles.decorator';
-import { PrismaClient, Role } from 'generated/prisma';
+import { Role } from 'generated/prisma';
 
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) { }
-
+  constructor(private readonly usersService: UsersService) { }
+ 
   @Get()
   @ApiResponse({ status: 200, description: 'List of users' }) // correspond a la doc de swagger
   async getUsers() {
@@ -48,17 +48,18 @@ export class UsersController {
 
   @Admin()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Patch('/:id')
-  async updateRoleUser(@Body() role: Role, @Param('id') id: string) {
-    return this.usersService.updateRoleUser(role, id);
-  }
-
-  @Admin()
-  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('/:id')
   async deleteUser(@Param('id') id: string) {
     return this.usersService.deleteUser(id);
   }
+  
+  @Admin()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Patch('/:id/role')
+  async updateRoleUser(@Body() role: Role, @Param('id') id: string) {
+    return this.usersService.updateRoleUser(role, id);
+  }
+
 
   
 }
