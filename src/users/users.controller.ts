@@ -17,7 +17,7 @@ export class UsersController {
     return this.usersService.getUsers();
   }
 
-  @Get()
+  @Get('ids')
   @ApiResponse({ status: 200, description: 'List of users' }) // correspond a la doc de swagger
   async getUsersByIds(@Body() ids: string[]) {
     return this.usersService.getUsersByIds(ids);
