@@ -15,7 +15,7 @@ export class CoursesController {
   constructor(private readonly coursesService: CoursesService, private readonly usersService: UsersService) { }
     
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Get()
+  @Get("")
   async getCourses(@Request() req) {
     const user = req.user as User;
     if(user.role === Role.STUDENT){
@@ -37,7 +37,7 @@ export class CoursesController {
 
   @Roles(Role.ADMIN, Role.TEACHER, Role.STUDENT)
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Get('id')
+  @Get('/:id')
   async getCourse(@Param('id') idCourse: string, @Request() req) {
     const user = req.user as User;
     if(user.role === Role.STUDENT){
@@ -122,7 +122,7 @@ export class CoursesController {
 
     @Roles(Role.ADMIN, Role.TEACHER)
     @HttpCode(200)
-    @Post('courses/:id/enroll')
+  @Post('/:id/enroll')
     async enrollStudentToCourse(@Param('id') courseId: string, @Body() usersId: string[], @Request() req) {
       const course = await this.coursesService.getCourse(courseId);
         if (!course) {
@@ -144,7 +144,7 @@ export class CoursesController {
 
     @Roles(Role.ADMIN, Role.TEACHER)
     @HttpCode(200)
-    @Post('courses/:id/unenroll')
+  @Post('/:id/unenroll')
     async unenrollStudentToCourse(@Param('id') courseId: string, @Body() studentsIdsUnenroll: string[], @Request() req) {
       const course = await this.coursesService.getCourse(courseId);
         if (!course) {
