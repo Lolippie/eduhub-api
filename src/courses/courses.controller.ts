@@ -149,14 +149,15 @@ export class CoursesController {
       throw new Error('Course not found');
     }
     const user = req.user as User;
-
+    const path = 'uploads/' + id + `/` + courseResources.title;
     if(course.teacherId == user.id || user.role == Role.ADMIN){
-      fs.writeFile('uploads/' + file.originalname, file.buffer, (err) => {
+      fs.writeFile(path, file.buffer, (err) => {
         if(err) {
           throw new Error('Error saving file:')
         };
       });
-      return this.coursesService.addResourcesToCourse(courseResources, id);
+      const resource = await this.resourcesService.createResource(id, courseResources.title, file.filename, path, file.mimetype, file.size);
+      return this.coursesService.addResourcesToCourse(resource, id);
     } else {
       throw new Error('You are not the teacher of this course');
     }

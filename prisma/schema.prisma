@@ -54,8 +54,12 @@ model Course {
 model Resource{
   id String @default(cuid()) @id
   fileUrl String 
+  fileName String
   course Course @relation(fields:[courseId], references : [id])
   courseId String
+  name String
+  size Int
+  type String
 }
 
 model Quiz {
