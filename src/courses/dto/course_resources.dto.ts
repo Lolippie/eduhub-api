@@ -5,8 +5,5 @@ export class CourseResourcesDto{
     @ApiProperty()
     @IsString()
     title:string;
-
-    @ApiProperty()
-    @IsString()
-    path: string;
+    
 }

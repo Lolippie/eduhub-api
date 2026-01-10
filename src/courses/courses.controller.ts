@@ -3,16 +3,23 @@ import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create_courses.dto';
 import { UpdateCoursDto } from './dto/update_courses.dto';
 import { CourseResourcesDto } from './dto/course_resources.dto';
-import { Admin, Roles, Student} from 'src/auth/decorators/roles.decorator';
+import { Admin, Roles} from 'src/auth/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
 import { Role, User } from 'generated/prisma';
 import { UsersService } from 'src/users/users.service';
+import { createFileValidationPipe } from './pipes/parse-file.pipe';
+import { PrismaService } from 'src/database/prisma.service';
+import { ResourcesService } from 'src/resources/resources.service';
+
 
 @Controller('courses')
 export class CoursesController {
 
-  constructor(private readonly coursesService: CoursesService, private readonly usersService: UsersService) { }
+  constructor(
+      private readonly coursesService: CoursesService, 
+      private readonly usersService: UsersService, 
+      private readonly resourcesService: ResourcesService) { }
     
   @HttpCode(HttpStatus.NO_CONTENT)
   @Get("")
@@ -52,7 +59,7 @@ export class CoursesController {
   async getCourse(@Param('id') idCourse: string, @Request() req) {
     const user = req.user as User;
     if(user.role === Role.STUDENT){
-      const course = await this.coursesService.getCourseStudent(user.id, idCourse);
+      const course = await this.coursesService.getCourseByStudentId(user.id, idCourse);
       if(!course){
         throw new Error('The student is not enrolled in this course');
       }
@@ -139,7 +146,7 @@ export class CoursesController {
   @Post('/:id/resources')
   @UseInterceptors(FileInterceptor('file'))
   async addResourcesToCourse(
-    @UploadedFile() file: Express.Multer.File, 
+    @UploadedFile(createFileValidationPipe()) file: Express.Multer.File, 
     @Param('id') id:string, 
     @Body() courseResources: CourseResourcesDto, 
     @Request() req

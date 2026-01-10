@@ -3,11 +3,11 @@ import { PrismaService } from '../database/prisma.service';
 import {CreateCourseDto} from "./dto/create_courses.dto";
 import {UpdateCoursDto} from "./dto/update_courses.dto";
 import { CourseResourcesDto } from './dto/course_resources.dto';
-import { User } from 'generated/prisma';
+import { Resource } from 'generated/prisma';
 
 @Injectable()
 export class CoursesService {
-    constructor(private prismaService: PrismaService) { }
+    constructor(private readonly prismaService: PrismaService) { }
 
     async getCourses(){
         const courses = await this.prismaService.course.findMany();
@@ -51,7 +51,7 @@ export class CoursesService {
         return course;
     }
 
-    async getCourseStudent(idStudent: string, idCourse:string){
+    async getCourseByStudentId(idStudent: string, idCourse:string){
         const courses = await this.prismaService.course.findUnique(
             {
             where: {id:idCourse},
@@ -101,9 +101,10 @@ export class CoursesService {
         return course;
     }
     
-    async addResourcesToCourse(courseResources: CourseResourcesDto, id:string){
+    async addResourcesToCourse(resource: Resource, id:string){
+
         const updatedCourse = await this.prismaService.course.update({
-            data: courseResources,
+            data: {ressources: {connect: {id: resource.id}}},
             where: { id }
         });
         return updatedCourse;

@@ -6,7 +6,7 @@ import { Role } from 'generated/prisma';
 
 @Injectable()
 export class UsersService {
-  constructor(private prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) { }
   // recuperer tous les users version rendre une promesse 
   async getUsers() {
     return this.prismaService.user.findMany();
