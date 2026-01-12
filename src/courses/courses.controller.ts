@@ -28,14 +28,14 @@ export class CoursesController {
     if(user.role === Role.STUDENT){
       const studentCourses = await this.coursesService.getCoursesStudent(user.id);
       if(!studentCourses){
-        throw new Error('No courses found for this student');
+        throw new NotFoundException('No courses found for this student');
       }
       return studentCourses;
     }
     if(user.role === Role.TEACHER){
       const teacherCourses = await this.coursesService.getCoursesTeacher(user.id);
       if(!teacherCourses){
-        throw new Error('No courses found for this teacher');
+        throw new NotFoundException('No courses found for this teacher');
       }
       return teacherCourses;
     }
@@ -61,16 +61,16 @@ export class CoursesController {
     if(user.role === Role.STUDENT){
       const course = await this.coursesService.getCourseByStudentId(user.id, idCourse);
       if(!course){
-        throw new Error('The student is not enrolled in this course');
+        throw new ForbiddenException('The student is not enrolled in this course');
       }
       return course;
     }
     const course = await this.coursesService.getCourse(idCourse);
     if (!course) {
-        throw new Error('Course not found');
+        throw new NotFoundException('Course not found');
     }
     if(!(user.role === Role.TEACHER && course.teacherId === user.id)){
-        throw new Error('The teacher does not managed this course');
+        throw new ForbiddenException('The teacher does not managed this course');
     }
     return course;
   }
@@ -81,7 +81,7 @@ export class CoursesController {
   async updateCourse(@Param('id') id:string, @Body() updateCourse: UpdateCoursDto, @Request() req) {
       const course = await this.coursesService.getCourse(id);
         if (!course) {
-            throw new Error('Course not found');
+            throw new NotFoundException('Course not found');
         }
         const user = req.user as User;
 
@@ -105,19 +105,19 @@ export class CoursesController {
   async enrollStudentToCourse(@Param('id') courseId: string, @Body() usersId: string[], @Request() req) {
     const course = await this.coursesService.getCourse(courseId);
       if (!course) {
-          throw new Error('Course not found');
+          throw new NotFoundException('Course not found');
       }
       const user = req.user as User;
 
       if(course.teacherId == user.id || user.role == Role.ADMIN){
         const students = await this.usersService.getUsersByIds(usersId);
         if (!students || students.some((s) => !s)) {
-          throw new Error('User not found');
+          throw new NotFoundException('User not found');
         }
         return this.coursesService.enrollStudentToCourse(usersId, courseId);
       }
       else {
-        throw new Error('You are not the teacher of this course');
+        throw new ForbiddenException('You are not the teacher of this course');
       }     
   }
 
@@ -128,7 +128,7 @@ export class CoursesController {
     const course = await this.coursesService.getCourse(courseId);
 
     if (!course) {
-        throw new Error('Course not found');
+        throw new NotFoundException('Course not found');
     }
 
     const user = req.user as User;
@@ -137,7 +137,7 @@ export class CoursesController {
       return this.coursesService.unenrollStudentToCourse(studentsIdsUnenroll, courseId);
     } 
     else {
-      throw new Error('You are not the teacher of this course');
+      throw new ForbiddenException('You are not the teacher of this course');
     }     
   }
     
@@ -153,7 +153,7 @@ export class CoursesController {
   ){
     const course = await this.coursesService.getCourse(id);
     if (!course) {
-      throw new Error('Course not found');
+      throw new NotFoundException('Course not found');
     }
     const user = req.user as User;
     const path = 'uploads/' + id + `/` + courseResources.title;
@@ -178,11 +178,11 @@ export class CoursesController {
     const course = await this.coursesService.getCourseWithStudents(idCourse);
 
     if (!course) {
-        throw new Error('Course not found');
+        throw new NotFoundException('Course not found');
     }
 
     if(!(user.role === Role.TEACHER && course.teacherId === user.id)){
-        throw new Error('The teacher does not managed this course');
+        throw new ForbiddenException('The teacher does not managed this course');
     }
     return course.students;
   }

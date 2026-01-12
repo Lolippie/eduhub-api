@@ -1,4 +1,4 @@
-import { Injectable, Post } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -24,6 +24,12 @@ export class UsersService {
   }
 
   async createUser(createUserDto: CreateUserDto) {
+    const isUserExist = await this.prismaService.user.findUnique({
+      where: { email: createUserDto.email },
+    });
+    if(isUserExist){
+      throw new UnauthorizedException('User already exists');
+    }
     const user = await this.prismaService.user.create({
       data: createUserDto,
     });
@@ -39,6 +45,12 @@ export class UsersService {
   }
 
   async updateRoleUser(role: Role, id: string) {
+    const isUserExist = await this.prismaService.user.findUnique({
+      where: { id },
+    });
+    if (!isUserExist){
+      throw new UnauthorizedException('User does not exist');
+    }
     const user = await this.prismaService.user.update({
       where: { id },
       data: {

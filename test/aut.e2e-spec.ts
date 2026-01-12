@@ -22,7 +22,6 @@ describe("Auth 2e2", ()=> {
         .send({
             email:"monexemple@gmail.com",
             password:"exemple123"
-
         }).expect(200);
     })
     

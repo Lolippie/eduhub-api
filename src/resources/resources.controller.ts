@@ -1,12 +1,11 @@
 
-import { Controller, HttpCode, Delete, Param, Get, Request, Response, NotFoundException} from '@nestjs/common';
+import { Controller, HttpCode, Delete, Param, Get, Request, Response, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { ResourcesService } from './resources.service';
 import { Role } from 'generated/prisma';
 import { Roles} from 'src/auth/decorators/roles.decorator';
 import { CoursesService } from 'src/courses/courses.service';
 import { join } from 'node:path';
 import * as fs from 'node:fs';
-import { InternalServerErrorException } from '@nestjs/common/exceptions/internal-server-error.exception';
 
 
 
@@ -31,23 +30,23 @@ export class ResourcesController {
 
         const resource = await this.resourcesService.getResource(id);
         if (!resource) {
-            throw new Error('Resource not found');
+            throw new NotFoundException('Resource not found');
         }
 
         const course = await this.coursesService.getCourse(resource.courseId);
         if (!course) { 
-            throw new Error('Associated course not found');
+            throw new NotFoundException('Associated course not found');
         }
 
         if (user.role === Role.STUDENT) {
             const isEnrolled = await this.coursesService.getCourseByStudentId(user.id, course.id);
             if (!isEnrolled) {
-                throw new Error('The student is not enrolled in the course associated with this resource');
+                throw new ForbiddenException('Student not enrolled in associated course');
             }
         }
 
         if (user.role === Role.TEACHER && course.teacherId !== user.id) {
-            throw new Error('The teacher is not assigned to the course associated with this resource');
+            throw new ForbiddenException('Teacher not assigned to associated course');
         }
 
         const filePath = join(process.cwd(), resource.fileUrl);
@@ -60,7 +59,9 @@ export class ResourcesController {
         });
 
         const stream = fs.createReadStream(filePath);
-        stream.on('error', (err) => { throw new InternalServerErrorException(); });
+        stream.on('error', (err) => {
+            res.status(500).end();
+        });
         stream.pipe(res);
     }
 }
