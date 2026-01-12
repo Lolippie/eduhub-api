@@ -18,11 +18,6 @@ export class CreateUserDto{
 
     @IsString()
     @ApiProperty()
-    @Matches(/^\d{6}$/, { message: 'PIN must be a 6-digit number' })
-    pin:string;
-
-    @IsString()
-    @ApiProperty()
     password:string;
 
     @IsString()

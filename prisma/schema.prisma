@@ -20,12 +20,6 @@ enum Role {
   STUDENT
 }
 
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  PENDING
-}
-
 model User {
   id  String @default(cuid()) @id
   email  String  @unique
@@ -35,10 +29,8 @@ model User {
   role  Role @default(STUDENT)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  registerPin String?
   managedCourses Course[] @relation("CourseTeacher" )
   enrolledCourses Course[] @relation("CourseStudents")
-  status UserStatus @default(PENDING)
 }
 
 model Course {
