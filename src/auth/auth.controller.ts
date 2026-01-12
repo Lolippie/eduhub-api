@@ -31,8 +31,15 @@ export class AuthController {
   }
 
   @Public()
-  @Post('register')
-  register(@Body() registerDto: RegisterDto) {
+  @Post('register/admin')
+  register() {
+    const registerDto: RegisterDto = {
+      email:"admin@admin.com",
+      password:"Admin1234",
+      firstName:"Admin",
+      lastName:"Admin",
+      role:"ADMIN"
+    };
     return this.authService.register(
       registerDto
     );

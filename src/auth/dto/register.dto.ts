@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, IsString, Matches } from "class-validator";
+import { Role } from "generated/prisma";
 
 export class RegisterDto{
     @IsString()
@@ -14,6 +15,13 @@ export class RegisterDto{
 
     @IsString()
     @ApiProperty()
-    @Matches(/^\d{6}$/, { message: 'PIN must be a 6-digit number' })
-    pin:string;
+    firstName:string;
+
+    @IsString()
+    @ApiProperty()
+    lastName:string;
+
+    @IsString()
+    @ApiProperty()
+    role:Role;
 }

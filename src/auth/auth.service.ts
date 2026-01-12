@@ -30,19 +30,24 @@ export class AuthService {
   }
 
   async register(register:RegisterDto) {
-    const matchingUser = await this.prismaService.user.findUnique({
-      where: { email: register.email, registerPin: register.pin, status: 'PENDING' },
-    });
-    if (!matchingUser){
-      throw new UnauthorizedException('Invalid registration pin or email' );
-    }
+
     const hashedPassword = await bcrypt.hash(register.password, 10);
-    const newUser = await this.prismaService.user.update({
-      where: { email: register.email, registerPin: register.pin, status: 'PENDING' },
+    const isUserExist = await this.prismaService.user.findUnique({
+      where: { email: register.email },
+    });
+    if(isUserExist){
+      throw new UnauthorizedException('UserAdmin already exists');
+    }
+    const newUser = await this.prismaService.user.create({
       data: {
-        password: hashedPassword
+        email: register.email,
+        password: hashedPassword,
+        firstName: register.firstName,
+        lastName: register.lastName,
+        role: register.role,
     }});
     const payload = { sub: newUser.id, email: newUser.email };
+
     return await this.jwtService.signAsync(payload);
   }
 }
