@@ -1,0 +1,31 @@
+meta {
+  name: create_user
+  type: http
+  seq: 2
+}
+
+post {
+  url: http:/localhost:3000/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbWthMmgwNDYwMDAwb2F0MGpsZWljcWU4IiwiZW1haWwiOiJhZG1pbkBhZG1pbi5jb20iLCJpYXQiOjE3NjgyNTY3MDgsImV4cCI6MTc2ODI2MDMwOH0.LA4XwNVCOiCVR60uGEzhuBF8qEsxCLFU6zN5T10CEoE
+}
+
+body:json {
+  {
+    "email": "adminTEst@admin.com",
+    "firstName": "Admin",
+    "lastName": "PasSupprimer",
+    "password": "admin",
+    "role": "ADMIN"
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

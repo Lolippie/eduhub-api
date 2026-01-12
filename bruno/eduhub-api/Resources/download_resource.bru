@@ -1,0 +1,20 @@
+meta {
+  name: download_resource
+  type: http
+  seq: 2
+}
+
+get {
+  url: http:/localhost:3000/resources/{id}/download?id
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,16 @@
+meta {
+  name: update_courses
+  type: http
+  seq: 2
+}
+
+post {
+  url: http:/localhost:3000/courses
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

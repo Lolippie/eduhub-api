@@ -1,0 +1,16 @@
+meta {
+  name: courses_unenroll
+  type: http
+  seq: 7
+}
+
+post {
+  url: http:/localhost:3000/courses/{id}/unenroll
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

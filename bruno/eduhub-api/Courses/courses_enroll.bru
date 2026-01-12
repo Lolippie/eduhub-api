@@ -1,0 +1,15 @@
+meta {
+  name: courses_enroll
+  type: http
+  seq: 6
+}
+
+post {
+  url: http:/localhost:3000/courses/{id}/enroll
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

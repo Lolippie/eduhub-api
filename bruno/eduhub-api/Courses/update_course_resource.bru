@@ -1,0 +1,15 @@
+meta {
+  name: update_course_resource
+  type: http
+  seq: 8
+}
+
+get {
+  url: http:/localhost:3000/courses/{id}/enroll
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

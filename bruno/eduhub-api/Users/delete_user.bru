@@ -1,0 +1,36 @@
+meta {
+  name: delete_user
+  type: http
+  seq: 5
+}
+
+delete {
+  url: '''
+    {
+      "email": "string",
+      "firstName": "string",
+      "lastName": "string",
+      "pin": "string",
+      "password": "string",
+      "role": "string"
+    {
+      "email": "string",
+      "firstName": "string",
+      "lastName": "string",
+      "pin": "string",
+      "password": "string",
+      "role": "string"
+    http:/localhost:3000/users/{id]?id
+'''
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,20 @@
+meta {
+  name: resource
+  type: http
+  seq: 1
+}
+
+get {
+  url: http:/localhost:3000/resources/{id}?id
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
