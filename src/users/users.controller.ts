@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersService } from './users.service';
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
@@ -11,7 +11,7 @@ import { Role } from 'generated/prisma';
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
  
-  @Get()
+  @Get('')
   @ApiResponse({ status: 200, description: 'List of users' }) // correspond a la doc de swagger
   async getUsers() {
     return this.usersService.getUsers();
@@ -56,7 +56,7 @@ export class UsersController {
   @Admin()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Patch('/:id/role')
-  async updateRoleUser(@Body() role: Role, @Param('id') id: string) {
+  async updateRoleUser(@Body('role') role: Role, @Param('id') id: string) {
     return this.usersService.updateRoleUser(role, id);
   }
 
