@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -49,7 +49,7 @@ export class UsersService {
       where: { id },
     });
     if (!isUserExist){
-      throw new UnauthorizedException('User does not exist');
+      throw new NotFoundException('User does not exist');
     }
     const user = await this.prismaService.user.update({
       where: { id },
@@ -61,9 +61,18 @@ export class UsersService {
   }
 
   async deleteUser(id: string) {
-    const user = await this.prismaService.user.delete({
+    const user = await this.prismaService.user.findUnique({
+      where: { id },
+    });
+    if(!user){
+      throw new NotFoundException('User does not exist');
+    }
+    if (user.email === "admin@admin.com"){
+      throw new UnauthorizedException('Cannot delete this admin user');
+    }
+    const deleteUser = await this.prismaService.user.delete({
       where: { id },
     })
-    return user;
+    return deleteUser;
   }
 }
