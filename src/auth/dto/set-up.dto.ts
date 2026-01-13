@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, IsString, Matches } from "class-validator";
 import { Role } from "generated/prisma";
 
-export class RegisterDto{
+export class SetUpDto{
     @IsString()
     @IsEmail()
     @ApiProperty()

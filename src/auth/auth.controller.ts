@@ -11,7 +11,7 @@ import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sign-in.dto';
 import { Public } from './decorators/public.decorator';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { RegisterDto } from './dto/register.dto';
+import { SetUpDto } from './dto/set-up.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -31,17 +31,60 @@ export class AuthController {
   }
 
   @Public()
-  @Post('register/admin')
-  register() {
-    const registerDto: RegisterDto = {
+  @Post('setup/users')
+  setup() {
+    const setUp: SetUpDto[]= [{
       email:"admin@admin.com",
       password:"Admin1234",
       firstName:"Admin",
       lastName:"Admin",
       role:"ADMIN"
-    };
-    return this.authService.register(
-      registerDto
+    },
+    {
+      email:"teacher@teacher.com",
+      password:"Teacher1234",
+      firstName:"Teacher",
+      lastName:"Teacher",
+      role:"TEACHER"
+    },
+    {
+      email:"teacher1@teacher.com",
+      password:"Teacher1234",
+      firstName:"Teacher1",
+      lastName:"Teacher1",
+      role:"TEACHER"
+    },
+    {
+      email:"student1@student.com",
+      password:"Student1234",
+      firstName:"Student1",
+      lastName:"Student1",
+      role:"STUDENT"
+    },
+    {
+      email:"student2@student.com",
+      password:"Student1234",
+      firstName:"Student2",
+      lastName:"Student2",
+      role:"STUDENT"
+    },
+    {
+      email:"student2@student.com",
+      password:"Student1234",
+      firstName:"Student2",
+      lastName:"Student2",
+      role:"STUDENT"
+    },
+    {
+      email:"movingUser@user.com",
+      password:"User1234",
+      firstName:"Moving",
+      lastName:"User",
+      role:"STUDENT"
+    }
+  ];
+    return this.authService.setUp(
+      setUp
     );
   }
 }

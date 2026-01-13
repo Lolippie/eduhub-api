@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../database/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto } from './dto/register.dto';
+import { SetUpDto } from './dto/set-up.dto';
 
 @Injectable()
 export class AuthService {
@@ -29,24 +29,31 @@ export class AuthService {
     throw new UnauthorizedException();
   }
 
-  async register(register:RegisterDto) {
-
-    const hashedPassword = await bcrypt.hash(register.password, 10);
-    const isUserExist = await this.prismaService.user.findUnique({
-      where: { email: register.email },
-    });
-    if(isUserExist){
-      throw new UnauthorizedException('UserAdmin already exists');
+  async setUp(users:SetUpDto[]) {
+    for (const user of users) {
+      const hashedPassword = await bcrypt.hash(user.password, 10);
+      const isUserExist = await this.prismaService.user.findUnique({
+        where: { email: user.email },
+      });
+      if(isUserExist){
+        throw new UnauthorizedException('User already exists');
+      }
+      await this.prismaService.user.create({
+        data: {
+          email: user.email,
+          password: hashedPassword,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+      }});
     }
-    const newUser = await this.prismaService.user.create({
-      data: {
-        email: register.email,
-        password: hashedPassword,
-        firstName: register.firstName,
-        lastName: register.lastName,
-        role: register.role,
-    }});
-    const payload = { sub: newUser.id, email: newUser.email };
+    const adminUser = await this.prismaService.user.findUnique({
+      where: { email: users[0].email },
+    });
+    if (!adminUser) {
+      throw new UnauthorizedException('Admin user creation failed');
+    }
+    const payload = { sub: adminUser.id, email: adminUser.email };
 
     return await this.jwtService.signAsync(payload);
   }
