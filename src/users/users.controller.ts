@@ -19,7 +19,7 @@ export class UsersController {
 
   @Get('ids')
   @ApiResponse({ status: 200, description: 'List of users' }) // correspond a la doc de swagger
-  async getUsersByIds(@Body() ids: string[]) {
+  async getUsersByIds(@Body("ids") ids: string[]) {
     return this.usersService.getUsersByIds(ids);
   }
   // Permet de recuperer tous les users version recuperation d'une promesse
