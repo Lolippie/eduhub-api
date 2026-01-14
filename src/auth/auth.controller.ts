@@ -19,7 +19,7 @@ export class AuthController {
 
   @Public()
   @HttpCode(HttpStatus.OK)
-  @Post('login')
+  @Post('signin')
   signIn(@Body() signInDto: SignInDto) {
     return this.authService.signIn(signInDto.email, signInDto.password);
   }
@@ -41,13 +41,6 @@ export class AuthController {
       role:"ADMIN"
     },
     {
-      email:"teacher@teacher.com",
-      password:"Teacher1234",
-      firstName:"Teacher",
-      lastName:"Teacher",
-      role:"TEACHER"
-    },
-    {
       email:"teacher1@teacher.com",
       password:"Teacher1234",
       firstName:"Teacher1",
@@ -55,17 +48,17 @@ export class AuthController {
       role:"TEACHER"
     },
     {
+      email:"teacher2@teacher.com",
+      password:"Teacher1234",
+      firstName:"Teacher2",
+      lastName:"Teacher2",
+      role:"TEACHER"
+    },
+    {
       email:"student1@student.com",
       password:"Student1234",
       firstName:"Student1",
       lastName:"Student1",
-      role:"STUDENT"
-    },
-    {
-      email:"student2@student.com",
-      password:"Student1234",
-      firstName:"Student2",
-      lastName:"Student2",
       role:"STUDENT"
     },
     {
