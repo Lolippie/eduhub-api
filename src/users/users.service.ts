@@ -3,6 +3,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from 'generated/prisma';
+import * as bcrypt from 'bcrypt';
+
 
 @Injectable()
 export class UsersService {
@@ -13,14 +15,53 @@ export class UsersService {
   }
 
   async getUsersByIds(ids: string[]) {
-    const users = await Promise.all(
-      ids.map((id) =>
-        this.prismaService.user.findUnique({
-          where: { id },
-        }),
-      ),
-    );
+    const users = await this.prismaService.user.findMany({
+      where: {
+        id: { 
+          in: ids 
+        }
+      },
+    });
+    if (users.length !== ids.length) {
+      throw new NotFoundException('One or more users not found');
+    }
+
     return users;
+  }
+
+    async getStudentsByIds(ids: string[]) {
+    const users = await this.prismaService.user.findMany({
+      where: {
+        id: { 
+          in: ids 
+        },
+        role: Role.STUDENT
+      },
+    });
+    if (users.length !== ids.length) {
+      throw new NotFoundException('One or more users not found');
+    }
+
+    return users;
+  }
+
+  async getTeacherById(id: string) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id,
+        role: Role.TEACHER
+      },
+      select: { 
+        id: true, 
+        email: true, 
+        firstName: true, 
+        lastName: true, 
+        managedCourses: true
+       }
+    });
+    if (!user) throw new NotFoundException('One or more users not found');
+    
+    return user;
   }
 
   async createUser(createUserDto: CreateUserDto) {
@@ -30,8 +71,12 @@ export class UsersService {
     if(isUserExist){
       throw new UnauthorizedException('User already exists');
     }
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const user = await this.prismaService.user.create({
-      data: createUserDto,
+      data: {
+        ...createUserDto,
+        password: hashedPassword,
+      },
     });
     return user;
   }
@@ -41,7 +86,7 @@ export class UsersService {
       where: { id },
       data: updatedUserDto,
     });
-    return user;
+    return { "message": "User updated successfully", "user": user };
   }
 
   async updateRoleUser(role: Role, id: string) {
@@ -64,15 +109,14 @@ export class UsersService {
     const user = await this.prismaService.user.findUnique({
       where: { id },
     });
-    if(!user){
-      throw new NotFoundException('User does not exist');
-    }
-    if (user.email === "admin@admin.com"){
-      throw new UnauthorizedException('Cannot delete this admin user');
-    }
-    const deleteUser = await this.prismaService.user.delete({
+    if(!user) throw new NotFoundException('User does not exist'); 
+
+    if (user.email === "admin@admin.com") throw new UnauthorizedException('Cannot delete this admin user');
+
+    await this.prismaService.user.delete({
       where: { id },
     })
-    return deleteUser;
+
+    return { "message": "User deleted successfully"};
   }
 }
