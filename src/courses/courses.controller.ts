@@ -124,6 +124,29 @@ export class CoursesController {
   @Roles(Role.ADMIN, Role.TEACHER)
   @HttpCode(200)
   @Post('/:id/resources')
+  @UseInterceptors(FilesInterceptor('files'))
+  async addResourcesToCourse(
+    @UploadedFiles(createFilesValidationPipe(true)) files: Express.Multer.File[], 
+    @Param('id') idCourse:string, 
+    @Body('titles') titles: string, 
+    @Request() req
+  ){
+    const course = await this.coursesService.getCourse(idCourse);
+
+    const user = req.user as User;
+    
+    if (user.role === Role.TEACHER && course.teacher?.id !== user.id) throw new ForbiddenException('You are not the teacher of this course');
+    const dto: CourseResourcesDto[] = JSON.parse(titles);
+    const resources = await this.resourcesService.createResources(idCourse, dto, files);
+    this.coursesService.addResourcesToCourse(resources, idCourse)
+    const updatedCourse = await this.coursesService.getCourse(idCourse);
+    return { message: 'Resources added successfully', updatedCourse};
+  }
+
+  
+  @Roles(Role.ADMIN, Role.TEACHER, Role.STUDENT)
+  @HttpCode(200)
+  @Get('/:id/resources')
   @UseInterceptors(FileInterceptor('file'))
   async addResourcesToCourse(
     @UploadedFile(createFileValidationPipe()) file: Express.Multer.File, 
