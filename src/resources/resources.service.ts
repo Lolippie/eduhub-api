@@ -4,6 +4,10 @@ import { CoursesService } from 'src/courses/courses.service';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { CourseResourcesDto } from 'src/courses/dto/course_resources.dto';
+import mammoth from 'mammoth';
+
+
+
 
 @Injectable()
 export class ResourcesService {
@@ -143,4 +147,57 @@ async createResource(idCourse: string, courseResourceTitle: string, file: Expres
         return resources;
     }
 
+
+    async readResourceContent(resource, idCourse: string): Promise<string> {
+    const filePath = path.join(
+        'uploads',
+        'courses',
+        idCourse,
+        resource.fileName
+    );
+
+    const ext = path.extname(resource.fileName).toLowerCase();
+
+    switch (ext) {
+        case '.txt':
+        case '.md':
+        return this.readMarkdown(filePath);
+
+        case '.docx':
+        return this.readDocx(filePath);
+
+        default:
+        return `[Unsupported file type: ${ext}]`;
+    }
+    }
+
+
+    async readDocx(filePath: string): Promise<string> {
+        const result = await mammoth.extractRawText({ path: filePath });
+        return result.value;
+    }
+
+
+    async readMarkdown(filePath: string): Promise<string> {
+    try {
+        // 1️⃣ Lire le fichier en UTF-8
+        const raw = await fs.promises.readFile(filePath, 'utf-8');
+
+        // 2️⃣ Supprimer les caractères non imprimables
+        let cleaned = raw.replace(/[^\x20-\x7E\n\r\t]+/g, '');
+
+        // 3️⃣ Normaliser les caractères Unicode
+        cleaned = cleaned.normalize('NFKC');
+
+        // 4️⃣ Supprimer les lignes de commentaire Markdown au début (# ou ##)
+        cleaned = cleaned
+        .split('\n')
+        .map(line => line.replace(/^#+\s*/, '')) // enlève les # du début
+        .join('\n');
+
+        return cleaned;
+    } catch (err) {
+        throw new Error(`Impossible de lire le fichier Markdown: ${(err as Error).message}`);
+    }
+}
 }

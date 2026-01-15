@@ -7,7 +7,8 @@ const ALLOWED_MIME_TYPES = [
   'application/octet-stream',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'image/jpeg',
-  'text/plain'
+  'text/plain',
+  "text/markdown"
 ];
 
 const ALLOWED_EXTENSIONS = [
@@ -15,7 +16,8 @@ const ALLOWED_EXTENSIONS = [
     '.docx',
     '.jpg',
     '.jpeg',
-    '.txt'
+    '.txt',
+    '.md'
 ];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
