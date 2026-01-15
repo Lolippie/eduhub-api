@@ -1,26 +1,36 @@
-import {ApiProperty} from "@nestjs/swagger";
-import {IsEmail, IsString, Matches} from "class-validator";
-import { Role } from "generated/prisma";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsString, IsEnum } from 'class-validator';
+import { Role } from 'generated/prisma';
 
-export class CreateUserDto{
-    @IsString()
-    @IsEmail()
-    @ApiProperty()
-    email:string;
+export class CreateUserDto {
+  @ApiProperty({
+    example: 'user@example.com',
+  })
+  @IsEmail()
+  email: string;
 
-    @IsString()
-    @ApiProperty()
-    firstName:string;
+  @ApiProperty({
+    example: 'John',
+  })
+  @IsString()
+  firstName: string;
 
-    @IsString()
-    @ApiProperty()
-    lastName:string;
+  @ApiProperty({
+    example: 'Doe',
+  })
+  @IsString()
+  lastName: string;
 
-    @IsString()
-    @ApiProperty()
-    password:string;
+  @ApiProperty({
+    example: 'Password123!',
+  })
+  @IsString()
+  password: string;
 
-    @IsString()
-    @ApiProperty()
-    role:Role;
-}       
+  @ApiProperty({
+    enum: Role,
+    example: Role.STUDENT,
+  })
+  @IsEnum(Role)
+  role: Role;
+}

@@ -6,9 +6,11 @@ import { Roles} from 'src/auth/decorators/roles.decorator';
 import { CoursesService } from 'src/courses/courses.service';
 import { join } from 'node:path';
 import * as fs from 'node:fs';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 
-
+@ApiTags('resources')
+@ApiBearerAuth()
 @Controller('resources')
 export class ResourcesController {
 
@@ -17,6 +19,11 @@ export class ResourcesController {
     @Roles(Role.ADMIN, Role.TEACHER)
     @HttpCode(200)
     @Delete('/:id')
+    @ApiOperation({ summary: 'Supprimer une ressource par ID' })
+    @ApiParam({ name: 'id', type: String, description: 'ID de la ressource à supprimer' })
+    @ApiResponse({ status: 200, description: 'Ressource supprimée avec succès.' })
+    @ApiResponse({ status: 403, description: 'Non autorisé à supprimer cette ressource.' })
+    @ApiResponse({ status: 404, description: 'Ressource non trouvée.' })
     async deleteResource(@Param('id') id: string, @Request() req) {
         const user = req.user;
 
@@ -34,6 +41,12 @@ export class ResourcesController {
 
     @Roles(Role.ADMIN, Role.TEACHER, Role.STUDENT)
     @HttpCode(200)
+    @Get('/:id/download')
+    @ApiOperation({ summary: 'Télécharger une ressource par ID' })
+    @ApiParam({ name: 'id', type: String, description: 'ID de la ressource à télécharger' })
+    @ApiResponse({ status: 200, description: 'Téléchargement du fichier.' })
+    @ApiResponse({ status: 403, description: 'Non autorisé à accéder à cette ressource.' })
+    @ApiResponse({ status: 404, description: 'Fichier introuvable.' })
     @Get('/:id/download')
     async getResource(@Param('id') id: string, @Response() res, @Request() req) {
         const user = req.user;

@@ -5,9 +5,9 @@ import {UpdateCoursDto} from "./dto/update_courses.dto";
 import { Resource } from 'generated/prisma';
 import { ResourcesService } from 'src/resources/resources.service';
 import { UsersService } from 'src/users/users.service';
-import { User } from 'generated/prisma';
-import * as fs from 'fs';
-import * as path from 'path';
+import { User, Resource } from 'generated/prisma';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 @Injectable()
 export class CoursesService {
