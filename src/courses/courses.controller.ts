@@ -1,16 +1,14 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, UploadedFile, UseInterceptors, Request, Patch } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, UploadedFiles, UseInterceptors, Request, Patch, ForbiddenException } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create_courses.dto';
 import { UpdateCoursDto } from './dto/update_courses.dto';
-import { CourseResourcesDto } from './dto/course_resources.dto';
 import { Admin, Roles} from 'src/auth/decorators/roles.decorator';
-import { FileInterceptor } from '@nestjs/platform-express';
-import * as fs from 'fs';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Role, User } from 'generated/prisma';
 import { UsersService } from 'src/users/users.service';
-import { createFileValidationPipe } from './pipes/parse-file.pipe';
-import { PrismaService } from 'src/database/prisma.service';
+import { createFilesValidationPipe } from './pipes/parse-file.pipe';
 import { ResourcesService } from 'src/resources/resources.service';
+import { CourseResourcesDto } from './dto/course_resources.dto';
 
 
 @Controller('courses')
@@ -21,40 +19,36 @@ export class CoursesController {
       private readonly usersService: UsersService, 
       private readonly resourcesService: ResourcesService) { }
     
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @Get("")
   async getCourses(@Request() req) {
     const user = req.user as User;
-    if(user.role === Role.STUDENT){
-      const studentCourses = await this.coursesService.getCoursesStudent(user.id);
-      if(!studentCourses){
-        throw new NotFoundException('No courses found for this student');
-      }
-      return studentCourses;
-    }
-    if(user.role === Role.TEACHER){
-      const teacherCourses = await this.coursesService.getCoursesTeacher(user.id);
-      if(!teacherCourses){
-        throw new NotFoundException('No courses found for this teacher');
-      }
-      return teacherCourses;
-    }
+
+    if(user.role === Role.STUDENT) return await this.coursesService.getCoursesStudent(user.id);
+
+    if(user.role === Role.TEACHER) return await this.coursesService.getCoursesTeacher(user.id);
+
     return this.coursesService.getCourses();
 }
 
   @Roles(Role.ADMIN, Role.TEACHER)
   @HttpCode(HttpStatus.CREATED)
   @Post("")
-  async createCourse(@Body() createCourseDto: CreateCourseDto, @Request() req) {
+  @UseInterceptors(FilesInterceptor('files'))
+  async createCourse(
+    @UploadedFiles(createFilesValidationPipe(false)) files: Express.Multer.File[], 
+    @Body() createCourseDto: CreateCourseDto, 
+    @Request() req) {
     const user = req.user as User;
     if(user.role === Role.TEACHER){
       createCourseDto.teacherId = user.id;
     }
-    return this.coursesService.createCourse(createCourseDto);
+
+    return this.coursesService.createCourse(createCourseDto, files);
   }
 
   @Roles(Role.ADMIN, Role.TEACHER, Role.STUDENT)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @Get('/:id')
   async getCourse(@Param('id') idCourse: string, @Request() req) {
     const user = req.user as User;
@@ -63,7 +57,7 @@ export class CoursesController {
     
     const course = await this.coursesService.getCourse(idCourse);
    
-    if(!(user.role === Role.TEACHER && course.teacherId === user.id)){
+    if(user.role === Role.TEACHER && course.teacher?.id !== user.id){
         throw new ForbiddenException('The teacher does not managed this course');
     }
 
@@ -78,7 +72,7 @@ export class CoursesController {
 
         const user = req.user as User;
 
-    if(user.role == Role.TEACHER && course.teacherId !== user.id){
+    if(user.role === Role.TEACHER && course.teacher?.id !== user.id){
         throw new ForbiddenException('You are not the teacher of this course');
         }
     return this.coursesService.updateCourse(updateCourse, id);
@@ -96,12 +90,12 @@ export class CoursesController {
   @Roles(Role.ADMIN, Role.TEACHER)
   @HttpCode(200)
   @Post('/:id/enroll')
-  async enrollStudentToCourse(@Param('id') courseId: string, @Body() usersId: string[], @Request() req) {
+  async enrollStudentToCourse(@Param('id') courseId: string, @Body("idsStudent") studentsIdsEnroll: string[], @Request() req) {
     const course = await this.coursesService.getCourse(courseId);
 
       const user = req.user as User;
 
-    if(user.role == Role.TEACHER && user.id == course.teacherId){
+    if(user.role == Role.TEACHER && user.id !== course.teacher?.id){
         throw new ForbiddenException('You are not the teacher of this course');
       }     
 
@@ -113,16 +107,13 @@ export class CoursesController {
   @Roles(Role.ADMIN, Role.TEACHER)
   @HttpCode(200)
   @Post('/:id/unenroll')
-  async unenrollStudentToCourse(@Param('id') courseId: string, @Body() studentsIdsUnenroll: string[], @Request() req) {
+  async unenrollStudentToCourse(@Param('id') courseId: string, @Body("idsStudent") studentsIdsUnenroll: string[], @Request() req) {
     const course = await this.coursesService.getCourse(courseId);
-
-    if (!course) {
-        throw new NotFoundException('Course not found');
-    }
 
     const user = req.user as User;
 
-    if(course.teacherId == user.id || user.role == Role.ADMIN){
+    if(course.teacher?.id == user.id || user.role == Role.ADMIN){
+      await this.usersService.getStudentsByIds(studentsIdsUnenroll);
       return this.coursesService.unenrollStudentToCourse(studentsIdsUnenroll, courseId);
     } 
     else {
@@ -160,18 +151,17 @@ export class CoursesController {
   }
 
   @Roles(Role.ADMIN, Role.TEACHER)
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @Get('/:id/students')
   async getStudentsFromCourseId(@Param('id') idCourse: string, @Request() req) {
     const user = req.user as User;
-    const course = await this.coursesService.getCourseWithStudents(idCourse);
+    const course = await this.coursesService.getCourse(idCourse);
 
-    if (!course) {
-        throw new NotFoundException('Course not found');
+    if(user.role === Role.TEACHER && course.teacher?.id !== user.id){
+        throw new ForbiddenException("You don't have access this course");
     }
-
-    if(!(user.role === Role.TEACHER && course.teacherId === user.id)){
-        throw new ForbiddenException('The teacher does not managed this course');
+    if(course.students.length === 0){
+      return { message: 'No students enrolled in this course', students: [] };
     }
     return course.students;
   }
