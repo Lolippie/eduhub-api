@@ -18,7 +18,7 @@ import { SetUpDto } from './dto/set-up.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Public()
+
   @HttpCode(HttpStatus.OK)
   @Post('signin')
   @ApiOperation({ summary: 'Se connecter avec email et mot de passe' })

@@ -8,10 +8,12 @@ import { UsersModule } from './users/users.module';
 import { CoursesModule } from './courses/courses.module';
 import { QuizzesModule } from './quizzes/quizzes.module';
 import { ResourcesModule } from './resources/resources.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { JwtAuthGuard } from './auth/auth.guard';
 
 @Module({
   imports: [DatabaseModule, ConfigModule.forRoot(), AuthModule, UsersModule, CoursesModule, QuizzesModule, ResourcesModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, JwtAuthGuard],
 })
 export class AppModule {}
