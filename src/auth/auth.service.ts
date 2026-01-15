@@ -19,14 +19,16 @@ export class AuthService {
     // chiffrer le mot de passe et le comparer avec celui en base de données
     if (user) {
       const isPasswordValid = await bcrypt.compare(password, user.password);
-      // Generate JWT token
-      if (isPasswordValid) {
-        const payload = { sub: user.id, email: user.email };
-        return await this.jwtService.signAsync(payload);
-      }
+
+      if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
+      
+      const token = await this.jwtService.signAsync({ sub: user.id, email: user.email })
+
+      if (!token) throw new UnauthorizedException('Token generation failed');
+      
+      return token;
     }
 
-    throw new UnauthorizedException();
   }
 
   async setUp(users:SetUpDto[]) {
@@ -35,10 +37,10 @@ export class AuthService {
       const isUserExist = await this.prismaService.user.findUnique({
         where: { email: user.email },
       });
-      if(isUserExist){
-        throw new UnauthorizedException('User already exists');
-      }
-      await this.prismaService.user.create({
+
+      if(isUserExist) throw new UnauthorizedException('User already exists')
+
+      const newUser = await this.prismaService.user.create({
         data: {
           email: user.email,
           password: hashedPassword,
@@ -46,15 +48,10 @@ export class AuthService {
           lastName: user.lastName,
           role: user.role,
       }});
-    }
-    const adminUser = await this.prismaService.user.findUnique({
-      where: { email: users[0].email },
-    });
-    if (!adminUser) {
-      throw new UnauthorizedException('Admin user creation failed');
-    }
-    const payload = { sub: adminUser.id, email: adminUser.email };
 
-    return await this.jwtService.signAsync(payload);
+      if (!newUser) throw new UnauthorizedException('User creation failed')
+    }
+  
+    return { message: 'Setup completed successfully' };
   }
 }

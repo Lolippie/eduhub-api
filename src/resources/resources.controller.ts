@@ -17,7 +17,17 @@ export class ResourcesController {
     @Roles(Role.ADMIN, Role.TEACHER)
     @HttpCode(200)
     @Delete('/:id')
-    async deleteResource(@Param('id') id: string) {
+    async deleteResource(@Param('id') id: string, @Request() req) {
+        const user = req.user;
+
+        const resource = await this.resourcesService.getResource(id);
+
+        const course = await this.coursesService.getCourse(resource.courseId);
+
+        if (user.role === Role.TEACHER && course.teacher?.id !== user.id) {
+            throw new ForbiddenException('Teacher not assigned to associated course');
+        }
+
       return this.resourcesService.deleteResource(id);
     }
 
@@ -29,23 +39,14 @@ export class ResourcesController {
         const user = req.user;
 
         const resource = await this.resourcesService.getResource(id);
-        if (!resource) {
-            throw new NotFoundException('Resource not found');
-        }
 
         const course = await this.coursesService.getCourse(resource.courseId);
-        if (!course) { 
-            throw new NotFoundException('Associated course not found');
-        }
 
         if (user.role === Role.STUDENT) {
-            const isEnrolled = await this.coursesService.getCourseByStudentId(user.id, course.id);
-            if (!isEnrolled) {
-                throw new ForbiddenException('Student not enrolled in associated course');
-            }
+            await this.coursesService.getCourseByStudentIdAndCourseId(user.id, course.id);
         }
 
-        if (user.role === Role.TEACHER && course.teacherId !== user.id) {
+        if (user.role === Role.TEACHER && course.teacher?.id !== user.id) {
             throw new ForbiddenException('Teacher not assigned to associated course');
         }
 

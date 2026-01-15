@@ -58,20 +58,15 @@ export class CoursesController {
   @Get('/:id')
   async getCourse(@Param('id') idCourse: string, @Request() req) {
     const user = req.user as User;
-    if(user.role === Role.STUDENT){
-      const course = await this.coursesService.getCourseByStudentId(user.id, idCourse);
-      if(!course){
-        throw new ForbiddenException('The student is not enrolled in this course');
-      }
-      return course;
-    }
+
+    if(user.role === Role.STUDENT) return await this.coursesService.getCourseByStudentIdAndCourseId(user.id, idCourse);
+    
     const course = await this.coursesService.getCourse(idCourse);
-    if (!course) {
-        throw new NotFoundException('Course not found');
-    }
+   
     if(!(user.role === Role.TEACHER && course.teacherId === user.id)){
         throw new ForbiddenException('The teacher does not managed this course');
     }
+
     return course;
   }
 
@@ -80,14 +75,13 @@ export class CoursesController {
   @Patch('/:id')
   async updateCourse(@Param('id') id:string, @Body() updateCourse: UpdateCoursDto, @Request() req) {
       const course = await this.coursesService.getCourse(id);
-        if (!course) {
-            throw new NotFoundException('Course not found');
-        }
+
         const user = req.user as User;
 
-        if(course.teacherId == user.id || user.role == Role.ADMIN){
-          return this.coursesService.updateCourse( updateCourse, id);
+    if(user.role == Role.TEACHER && course.teacherId !== user.id){
+        throw new ForbiddenException('You are not the teacher of this course');
         }
+    return this.coursesService.updateCourse(updateCourse, id);
   }
 
   @Admin()
@@ -104,21 +98,16 @@ export class CoursesController {
   @Post('/:id/enroll')
   async enrollStudentToCourse(@Param('id') courseId: string, @Body() usersId: string[], @Request() req) {
     const course = await this.coursesService.getCourse(courseId);
-      if (!course) {
-          throw new NotFoundException('Course not found');
-      }
+
       const user = req.user as User;
 
-      if(course.teacherId == user.id || user.role == Role.ADMIN){
-        const students = await this.usersService.getUsersByIds(usersId);
-        if (!students || students.some((s) => !s)) {
-          throw new NotFoundException('User not found');
-        }
-        return this.coursesService.enrollStudentToCourse(usersId, courseId);
-      }
-      else {
+    if(user.role == Role.TEACHER && user.id == course.teacherId){
         throw new ForbiddenException('You are not the teacher of this course');
       }     
+
+    await this.usersService.getUsersByIds(studentsIdsEnroll);
+    return this.coursesService.enrollStudentToCourse(studentsIdsEnroll, courseId);
+  
   }
 
   @Roles(Role.ADMIN, Role.TEACHER)
