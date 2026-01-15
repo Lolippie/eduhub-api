@@ -5,11 +5,25 @@ meta {
 }
 
 get {
-  url: http:/localhost:3000/users/ids
-  body: none
-  auth: inherit
+  url: http://localhost:3000/users/ids
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbWthMmgwNDYwMDAwb2F0MGpsZWljcWU4IiwiZW1haWwiOiJhZG1pbkBhZG1pbi5jb20iLCJpYXQiOjE3NjgyNTY3MDgsImV4cCI6MTc2ODI2MDMwOH0.LA4XwNVCOiCVR60uGEzhuBF8qEsxCLFU6zN5T10CEoE
+}
+
+body:json {
+  {
+    "ids":[
+      "cmkbqicze0000oa5w0tketoim",
+      "cmkbr16wa0002oah0ibnkos9y"
+    ]
+  }
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }
