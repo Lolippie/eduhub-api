@@ -1,62 +1,55 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
+import { Role } from 'generated/prisma';
+import { PrismaService } from 'src/database/prisma.service';
 import { IS_PUBLIC_KEY } from './decorators/public.decorator';
-import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class JwtAuthGuard implements CanActivate {
   constructor(
-    private jwtService: JwtService, // header.payload.signature
-    private prismaService: PrismaService,
-    private reflector: Reflector,
-  ) { }
+    private readonly reflector: Reflector,
+    private readonly jwtService: JwtService,
+    private readonly prismaService: PrismaService
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) {
-      // 💡 See this condition
-      return true;
-    }
+    if (isPublic) return true;
 
-    const request: Request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
-    if (!token) {
-      throw new UnauthorizedException();
-    }
 
+    if (!token) throw new UnauthorizedException();
+
+    let user;
     try {
-      const payload = await this.jwtService.verifyAsync<{
-        sub: string;
-        email: string;
-      }>(token);
+      const payload = await this.jwtService.verifyAsync<{ sub: string; email: string }>(token);
 
-      const user = await this.prismaService.user.findUnique({
+      user = await this.prismaService.user.findUnique({
         where: { id: payload.sub },
         select: { id: true, email: true, firstName: true, lastName: true, role: true },
       });
 
-      if (!user) {
-        throw new UnauthorizedException();
-      }
+      if (!user) throw new UnauthorizedException();
 
-      request['user'] = user;
+      request.user = user;
     } catch {
       throw new UnauthorizedException();
     }
+
+    const requiredRoles = this.reflector.get<Role[]>('roles', context.getHandler());
+    if (requiredRoles && !requiredRoles.includes(user.role)) {
+      throw new ForbiddenException('Insufficient role');
+    }
+
     return true;
   }
 
-  private extractTokenFromHeader(request: Request): string | undefined {
+  private extractTokenFromHeader(request: any): string | undefined {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }
