@@ -31,6 +31,7 @@ model User {
   updatedAt  DateTime @updatedAt
   managedCourses Course[] @relation("CourseTeacher" )
   enrolledCourses Course[] @relation("CourseStudents")
+  analytics Analytics[] @relation("AnalyticsStudent")
 }
 
 model Course {
@@ -40,7 +41,7 @@ model Course {
   teacherId String?
   ressources Resource[]
   students User[] @relation("CourseStudents")
-  quiz Quiz?
+  quiz Quiz? @relation("CourseQuiz")
 }
 
 model Resource{
@@ -48,14 +49,44 @@ model Resource{
   fileUrl String 
   fileName String
   course Course @relation(fields:[courseId], references : [id])
-  courseId String
+  courseId String 
   name String
   size Int
   type String
 }
 
 model Quiz {
-  course Course @relation(fields:[courseId], references : [id])
-  courseId String @id
-  questions String[]
+  id        String     @id @default(cuid())
+  course    Course     @relation("CourseQuiz", fields: [courseId], references: [id])
+  courseId  String @unique
+  questions Question[]
+  analytics Analytics[] @relation("QuizAnalytics")
+}
+
+model Question {
+  id        String   @id @default(cuid())
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
+  quizId    String
+  label     String
+  answers   Answer[]
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId String
+  label      String
+  isCorrect  Boolean
+}
+
+model Analytics {
+ id        String @id @default(cuid())
+  student   User   @relation("AnalyticsStudent", fields:[studentId], references:[id])
+  studentId String
+  quiz      Quiz   @relation("QuizAnalytics",fields:[quizId], references:[id])
+  quizId    String
+  score     Float
+
+  @@unique([studentId, quizId])
+
 }
