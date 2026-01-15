@@ -29,7 +29,7 @@ export class CoursesController {
     if(user.role === Role.TEACHER) return await this.coursesService.getCoursesTeacher(user.id);
 
     return this.coursesService.getCourses();
-}
+  }
 
   @Roles(Role.ADMIN, Role.TEACHER)
   @HttpCode(HttpStatus.CREATED)
@@ -68,13 +68,13 @@ export class CoursesController {
   @HttpCode(200)
   @Patch('/:id')
   async updateCourse(@Param('id') id:string, @Body() updateCourse: UpdateCoursDto, @Request() req) {
-      const course = await this.coursesService.getCourse(id);
+    const course = await this.coursesService.getCourse(id);
 
-        const user = req.user as User;
+    const user = req.user as User;
 
     if(user.role === Role.TEACHER && course.teacher?.id !== user.id){
         throw new ForbiddenException('You are not the teacher of this course');
-        }
+    }
     return this.coursesService.updateCourse(updateCourse, id);
   }
 
@@ -93,11 +93,11 @@ export class CoursesController {
   async enrollStudentToCourse(@Param('id') courseId: string, @Body("idsStudent") studentsIdsEnroll: string[], @Request() req) {
     const course = await this.coursesService.getCourse(courseId);
 
-      const user = req.user as User;
+    const user = req.user as User;
 
     if(user.role == Role.TEACHER && user.id !== course.teacher?.id){
-        throw new ForbiddenException('You are not the teacher of this course');
-      }     
+      throw new ForbiddenException('You are not the teacher of this course');
+    }
 
     await this.usersService.getUsersByIds(studentsIdsEnroll);
     return this.coursesService.enrollStudentToCourse(studentsIdsEnroll, courseId);
@@ -148,29 +148,23 @@ export class CoursesController {
   @HttpCode(200)
   @Get('/:id/resources')
   @UseInterceptors(FileInterceptor('file'))
-  async addResourcesToCourse(
-    @UploadedFile(createFileValidationPipe()) file: Express.Multer.File, 
+  async getResourcesFromCourseId(
     @Param('id') id:string, 
-    @Body() courseResources: CourseResourcesDto, 
     @Request() req
   ){
     const course = await this.coursesService.getCourse(id);
-    if (!course) {
-      throw new NotFoundException('Course not found');
-    }
+
     const user = req.user as User;
-    const path = 'uploads/' + id + `/` + courseResources.title;
-    if(course.teacherId == user.id || user.role == Role.ADMIN){
-      fs.writeFile(path, file.buffer, (err) => {
-        if(err) {
-          throw new Error('Error saving file:')
-        };
-      });
-      const resource = await this.resourcesService.createResource(id, courseResources.title, file.filename, path, file.mimetype, file.size);
-      return this.coursesService.addResourcesToCourse(resource, id);
-    } else {
-      throw new Error('You are not the teacher of this course');
+    if(user.role === Role.STUDENT){
+
+      const courseStudent = await this.coursesService.getCourseByStudentIdAndCourseId(user.id, course.id);
+      return this.coursesService.getCourseResources(courseStudent.id)
     }
+    if(user.role === Role.TEACHER && course.teacher?.id !== user.id){
+        throw new ForbiddenException("You don't have access to the resources of this course");
+    }
+    
+    return this.coursesService.getCourseResources(id);
   }
 
   @Roles(Role.ADMIN, Role.TEACHER)
