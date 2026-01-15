@@ -1,6 +1,7 @@
 import { Optional } from "@nestjs/common";
 import {ApiProperty} from "@nestjs/swagger";
-import {IsOptional, IsString} from "class-validator";
+import { Transform } from "class-transformer";
+import {IsArray, IsOptional, IsString} from "class-validator";
 import { Resource, User } from "generated/prisma";
 
 export class CreateCourseDto{
@@ -10,15 +11,24 @@ export class CreateCourseDto{
 
     @ApiProperty()
     @IsString()
-    ressources:Resource[];
-
-    @ApiProperty()
-    @IsString()
     @IsOptional()
     teacherId:string;
 
     @ApiProperty()
-    @IsString()
     @IsOptional()
-    students:User[];
+    @IsArray()
+    @IsString({ each: true })
+    @Transform(({ value }) =>
+        typeof value === 'string' ? JSON.parse(value) : value
+    )
+    idsStudent:string[];
+
+    @ApiProperty({ type: [String], required: false })
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    @Transform(({ value }) =>
+        typeof value === 'string' ? JSON.parse(value) : value
+    )
+    titlesResource: string[];
 }
