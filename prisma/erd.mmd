@@ -1,0 +1,67 @@
+erDiagram
+    USER {
+        String id PK
+        String email
+        String firstName
+        String lastName
+        String password
+        Role role
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    COURSE {
+        String id PK
+        String title
+        String teacherId FK
+    }
+
+    RESOURCE {
+        String id PK
+        String fileUrl
+        String fileName
+        String courseId FK
+        String name
+        Int size
+        String type
+    }
+
+    QUIZ {
+        String id PK
+        String courseId FK
+    }
+
+    QUESTION {
+        String id PK
+        String quizId FK
+        String label
+    }
+
+    ANSWER {
+        String id PK
+        String questionId FK
+        String label
+        Boolean isCorrect
+    }
+
+    ANALYTICS {
+        String id PK
+        String studentId FK
+        String quizId FK
+        Float score
+    }
+
+    %% Relations
+
+    USER ||--o{ COURSE : managedCourses
+    USER ||--o{ COURSE : enrolledCourses
+    USER ||--o{ ANALYTICS : analytics
+
+    COURSE ||--o{ RESOURCE : ressources
+    COURSE ||--o{ QUIZ : quiz
+    COURSE }o--o{ USER : students
+
+    QUIZ ||--o{ QUESTION : questions
+    QUIZ ||--o{ ANALYTICS : analytics
+
+    QUESTION ||--o{ ANSWER : answers
