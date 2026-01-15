@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -69,7 +69,7 @@ export class UsersService {
       where: { email: createUserDto.email },
     });
     if(isUserExist){
-      throw new UnauthorizedException('User already exists');
+      throw new ConflictException('User already exists');
     }
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const user = await this.prismaService.user.create({
@@ -81,13 +81,26 @@ export class UsersService {
     return user;
   }
 
-  async updateUser(updatedUserDto: UpdateUserDto, id: string) {
-    const user = await this.prismaService.user.update({
-      where: { id },
-      data: updatedUserDto,
-    });
-    return { "message": "User updated successfully", "user": user };
+ async updateUser(updatedUserDto: UpdateUserDto, id: string) {
+  const userExists = await this.prismaService.user.findUnique({
+    where: { id },
+  });
+
+  if (!userExists) {
+    throw new NotFoundException('User not found');
   }
+
+  const user = await this.prismaService.user.update({
+    where: { id },
+    data: updatedUserDto,
+  });
+
+  return {
+    message: 'User updated successfully',
+    user,
+  };
+}
+
 
   async updateRoleUser(role: Role, id: string) {
     const isUserExist = await this.prismaService.user.findUnique({

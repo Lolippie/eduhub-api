@@ -3,7 +3,6 @@ import { PrismaService } from '../database/prisma.service';
 import { CoursesService } from 'src/courses/courses.service';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { th } from 'zod/v4/locales';
 import { CourseResourcesDto } from 'src/courses/dto/course_resources.dto';
 
 @Injectable()
@@ -38,7 +37,7 @@ export class ResourcesService {
             resourceToDelete.courseId,
         );
 
-        if(!filePath.startsWith(uploadsBase)) throw new UnauthorizedException('Invalid file path');
+        if(!filePath.startsWith(uploadsBase)) throw new NotFoundException('Invalid file path');
 
         try {
             if (fs.existsSync(filePath)) {
@@ -62,7 +61,6 @@ export class ResourcesService {
 async createResources(idCourse: string, dto: CourseResourcesDto[], files: Express.Multer.File[]) {
         const sizeFiles = files ? files.length : 0;
         const dtoTitlesSize = dto ? dto.length : 0;
-        console.log(sizeFiles, dtoTitlesSize, dto);
         if(sizeFiles !== dtoTitlesSize){
             throw new UnauthorizedException('The number of courses and files do not match');
         }
@@ -95,7 +93,7 @@ async createResource(idCourse: string, courseResourceTitle: string, file: Expres
         const baseName = (courseResourceTitle || path.basename(file.originalname, ext))
             .toString()
             .trim()
-            .replace(/[^a-zA-Z0-9-_ ]/g, '_');
+            .replaceAll(/[^a-zA-Z0-9-_ ]/g, '_');
 
         let fileName = `${baseName}${ext}`;
         let filePath = path.join(dirPath, fileName);

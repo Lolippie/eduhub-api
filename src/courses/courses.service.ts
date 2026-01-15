@@ -2,7 +2,6 @@ import { ForbiddenException, Injectable, NotFoundException, UnauthorizedExceptio
 import { PrismaService } from '../database/prisma.service';
 import {CreateCourseDto} from "./dto/create_courses.dto";
 import {UpdateCoursDto} from "./dto/update_courses.dto";
-import { Resource } from 'generated/prisma';
 import { ResourcesService } from 'src/resources/resources.service';
 import { UsersService } from 'src/users/users.service';
 import { User, Resource } from 'generated/prisma';
@@ -44,11 +43,11 @@ export class CoursesService {
 
     async getCoursesStudent(studentId: string){
         const courses = await this.prismaService.course.findMany({
-            include:{
-                students:{
-                    where:{id: studentId}
-                }
-            }
+            where: {
+                students: {
+                    some: { id: studentId },
+                },
+            },
         });
 
         if(!courses) throw new NotFoundException('No courses found for this student');
@@ -147,6 +146,7 @@ export class CoursesService {
     }
 
     async createCourse(dto: CreateCourseDto, files?: Express.Multer.File[]){
+        
         const sizeFiles = files ? files.length : 0;
         const dtoTitlesSize = dto.titlesResource ? dto.titlesResource.length : 0;
         if(sizeFiles !== dtoTitlesSize){
@@ -280,7 +280,7 @@ export class CoursesService {
     }
 
     async enrollStudentToCourse(studentsIds: string[], courseId: string) {
-        this.usersServices.getStudentsByIds(studentsIds);
+        await this.usersServices.getStudentsByIds(studentsIds);
         const connectItems = studentsIds.map((id) => ({ id }));
         const updatedCourse = await this.prismaService.course.update({
             where: { id: courseId },

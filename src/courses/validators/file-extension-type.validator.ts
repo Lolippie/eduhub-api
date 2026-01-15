@@ -1,5 +1,5 @@
 import { FileValidator } from '@nestjs/common';
-import { extname } from 'path';
+import { extname } from 'node:path';
 
 interface IFileExtensionTypeValidatorProps {
   allowedExtensions: string[];
